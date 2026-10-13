@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TNPSC Group 4 Mock Test</title>
+<style>
+:root{--navy:#15345b;--blue:#2463a6;--bg:#f3f6fb;--line:#dbe3ef;--green:#16804a;--red:#b42318;--amber:#a15c00}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Tamil",sans-serif;background:var(--bg);color:#182230}
+header{background:var(--navy);color:white;padding:18px 22px}header h1{margin:0;font-size:clamp(20px,3vw,28px)}header p{margin:6px 0 0;color:#e0eafa}
+.wrap{max-width:1200px;margin:18px auto;padding:0 14px}.notice{background:#fff7e6;border:1px solid #f2d49b;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:14px}
+.top{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}.stat{background:white;border:1px solid var(--line);border-radius:10px;padding:12px 16px;flex:1;min-width:130px}.stat small{display:block;color:#5b6574}.stat strong{font-size:20px;display:block;margin-top:4px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px}.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 2px 8px #14213d08}
+.qhead{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}.tag{font-size:12px;padding:5px 9px;border-radius:20px;background:#eaf2ff;color:#184d8e}
+.question{font-size:18px;font-weight:700;line-height:1.55;margin:14px 0}.translation{font-size:17px;font-weight:600;line-height:1.6;margin:10px 0 18px;color:#364152}
+.option{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:12px;margin:9px 0;cursor:pointer;line-height:1.5}.option:hover{background:#f6f9ff}.option input{margin-top:4px;accent-color:var(--blue)}.option.selected{border-color:var(--blue);background:#edf5ff}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.btn{border:0;border-radius:8px;padding:11px 15px;cursor:pointer;font-weight:700;background:var(--blue);color:white}.btn.secondary{background:#e9eef5;color:#23354d}.btn.outline{background:white;border:1px solid var(--line);color:#23354d}.btn:disabled{opacity:.45;cursor:not-allowed}
+.palette{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}.num{padding:10px 0;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-weight:700}.num.current{outline:2px solid var(--blue)}.num.answered{background:#e2f6e9;border-color:#8ad0a5}.num.review{background:#fff0d5;border-color:#e9bd69}.legend{font-size:12px;color:#596579;display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px}
+.hidden{display:none!important}.result{text-align:center}.score{font-size:42px;color:var(--green);font-weight:800}.review-row{text-align:left;border-top:1px solid var(--line);padding:12px 0}.correct{color:var(--green)}.wrong{color:var(--red)}
+footer{text-align:center;color:#687385;font-size:12px;padding:20px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.panel{padding:15px}.palette{grid-template-columns:repeat(6,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>TNPSC Group 4 — Online Mock Test</h1><p>தமிழ் + English | Practice Test</p></header>
+<div class="wrap">
+<div class="notice"><strong>Demo version:</strong> This starter test contains 10 sample practice questions. Verify the latest syllabus and exam scheme on the official <a href="https://www.tnpsc.gov.in/" target="_blank" rel="noopener">TNPSC website</a>. This is not an official TNPSC examination.</div>
+<div id="startPanel" class="panel">
+<h2>Welcome / வரவேற்கிறோம்</h2>
+<p>Enter your name and start the practice test. Your answers are evaluated in this browser; this demo does not save results to an online database.</p>
+<label for="studentName">Student name / மாணவர் பெயர்</label><br>
+<input id="studentName" maxlength="80" placeholder="Enter your name / பெயரை உள்ளிடவும்" style="width:100%;max-width:460px;padding:12px;border:1px solid #cbd5e1;border-radius:8px;margin:8px 0 16px">
+<p><strong>Questions:</strong> 10 &nbsp; | &nbsp; <strong>Time:</strong> 15 minutes &nbsp; | &nbsp; <strong>Marks:</strong> 1 per correct answer, no negative marking in this demo</p>
+<button class="btn" onclick="startTest()">Start Test / தேர்வைத் தொடங்கு</button>
+</div>
+<div id="examPanel" class="hidden">
+<div class="top">
+<div class="stat"><small>Candidate / தேர்வாளர்</small><strong id="candidateLabel">Student</strong></div>
+<div class="stat"><small>Time left / மீதமுள்ள நேரம்</small><strong id="timer">15:00</strong></div>
+<div class="stat"><small>Answered / பதிலளித்தவை</small><strong id="answeredCount">0 / 10</strong></div>
+</div>
+<div class="layout">
+<main class="panel">
+<div class="qhead"><strong id="qNumber">Question 1 of 10</strong><span class="tag" id="qCategory">General Knowledge</span></div>
+<div class="question" id="questionEn"></div><div class="translation" id="questionTa"></div>
+<div id="options"></div>
+<div class="buttons">
+<button class="btn secondary" id="prevBtn" onclick="move(-1)">← Previous</button>
+<button class="btn outline" onclick="clearAnswer()">Clear response</button>
+<button class="btn outline" onclick="toggleReview()">Mark for review</button>
+<button class="btn" id="nextBtn" onclick="move(1)">Next →</button>
+</div>
+</main>
+<aside class="panel">
+<h3 style="margin-top:0">Question Palette</h3><p style="font-size:13px;color:#5b6574">Select a question number to navigate.</p>
+<div id="palette" class="palette"></div>
+<div class="legend"><span><i class="dot" style="background:#e2f6e9"></i>Answered</span><span><i class="dot" style="background:#fff0d5"></i>Review</span><span><i class="dot" style="background:#fff;border:1px solid #cbd5e1"></i>Not answered</span></div>
+<button class="btn" style="width:100%;margin-top:20px" onclick="confirmSubmit()">Submit Test / சமர்ப்பி</button>
+</aside>
+</div>
+</div>
+<div id="resultPanel" class="panel hidden"></div>
+</div>
+<footer>TNPSC Group 4 Mock Test • Free starter website • Not affiliated with TNPSC</footer>
+<script>
+const questions = [
+{cat:"General Tamil / பொது தமிழ்",en:"Which is the opposite of “உயர்வு”?",ta:"“உயர்வு” என்பதன் எதிர்ச்சொல் எது?",opts:[["தாழ்வு","தாழ்வு"],["வளர்ச்சி","வளர்ச்சி"],["மகிழ்ச்சி","மகிழ்ச்சி"],["சிறப்பு","சிறப்பு"]],ans:0},
+{cat:"Tamil Nadu / தமிழ்நாடு",en:"What is the capital of Tamil Nadu?",ta:"தமிழ்நாட்டின் தலைநகரம் எது?",opts:[["Madurai / மதுரை","மதுரை"],["Chennai / சென்னை","சென்னை"],["Coimbatore / கோயம்புத்தூர்","கோயம்புத்தூர்"],["Salem / சேலம்","சேலம்"]],ans:1},
+{cat:"Indian Polity / இந்திய அரசியல்",en:"How many Fundamental Duties are listed in the Indian Constitution at present?",ta:"தற்போது இந்திய அரசியலமைப்பில் எத்தனை அடிப்படைக் கடமைகள் உள்ளன?",opts:[["10","10"],["11","11"],["12","12"],["9","9"]],ans:1},
+{cat:"Geography / புவியியல்",en:"Which is the longest river flowing entirely within Tamil Nadu?",ta:"தமிழ்நாட்டிற்குள் முழுமையாகப் பாயும் நீளமான ஆறு எது?",opts:[["Vaigai / வைகை","வைகை"],["Palar / பாலாறு","பாலாறு"],["Thamirabarani / தாமிரபரணி","தாமிரபரணி"],["Kaveri / காவிரி","காவிரி"]],ans:2},
+{cat:"Mathematics / கணிதம்",en:"What is 25% of 240?",ta:"240-இன் 25% எவ்வளவு?",opts:[["40","40"],["50","50"],["60","60"],["80","80"]],ans:2},
+{cat:"Reasoning / திறனறிவு",en:"Find the next number: 3, 6, 12, 24, __",ta:"அடுத்த எண் எது: 3, 6, 12, 24, __",opts:[["30","30"],["36","36"],["42","42"],["48","48"]],ans:3},
+{cat:"Science / அறிவியல்",en:"Which gas do plants mainly absorb during photosynthesis?",ta:"ஒளிச்சேர்க்கையின்போது தாவரங்கள் முக்கியமாக எந்த வாயுவை உட்கொள்கின்றன?",opts:[["Oxygen / ஆக்சிஜன்","ஆக்சிஜன்"],["Carbon dioxide / கார்பன் டை ஆக்சைடு","கார்பன் டை ஆக்சைடு"],["Nitrogen / நைட்ரஜன்","நைட்ரஜன்"],["Hydrogen / ஹைட்ரஜன்","ஹைட்ரஜன்"]],ans:1},
+{cat:"Indian History / இந்திய வரலாறு",en:"Who is popularly known as the Father of the Indian Constitution?",ta:"இந்திய அரசியலமைப்பின் தந்தை என்று பொதுவாக அழைக்கப்படுபவர் யார்?",opts:[["Mahatma Gandhi / மகாத்மா காந்தி","மகாத்மா காந்தி"],["Jawaharlal Nehru / ஜவஹர்லால் நேரு","ஜவஹர்லால் நேரு"],["B. R. Ambedkar / பி. ஆர். அம்பேத்கர்","பி. ஆர். அம்பேத்கர்"],["Sardar Patel / சர்தார் பட்டேல்","சர்தார் பட்டேல்"]],ans:2},
+{cat:"Environment / சுற்றுச்சூழல்",en:"Which of these is a renewable source of energy?",ta:"பின்வருவனவற்றில் புதுப்பிக்கத்தக்க ஆற்றல் மூலம் எது?",opts:[["Coal / நிலக்கரி","நிலக்கரி"],["Petrol / பெட்ரோல்","பெட்ரோல்"],["Solar energy / சூரிய ஆற்றல்","சூரிய ஆற்றல்"],["Diesel / டீசல்","டீசல்"]],ans:2},
+{cat:"Computer Basics / கணினி அடிப்படை",en:"What does CPU stand for?",ta:"CPU என்பதன் விரிவாக்கம் என்ன?",opts:[["Central Processing Unit","மைய செயலாக்க அலகு"],["Computer Personal Unit","கணினி தனிப்பட்ட அலகு"],["Central Program Utility","மைய நிரல் பயன்பாடு"],["Control Processing User","கட்டுப்பாட்டு செயலாக்க பயனர்"]],ans:0}
+];
+let current=0,answers=Array(questions.length).fill(null),review=Array(questions.length).fill(false),seconds=900,clock=null,finished=false,student="";
+function startTest(){student=document.getElementById("studentName").value.trim()||"Student";document.getElementById("candidateLabel").textContent=student;document.getElementById("startPanel").classList.add("hidden");document.getElementById("examPanel").classList.remove("hidden");render();clock=setInterval(()=>{seconds--;document.getElementById("timer").textContent=formatTime(seconds);if(seconds<=60)document.getElementById("timer").style.color="var(--red)";if(seconds<=0){clearInterval(clock);submitTest(true)}},1000)}
+function formatTime(s){s=Math.max(0,s);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function render(){let q=questions[current];document.getElementById("qNumber").textContent=`Question ${current+1} of ${questions.length} / வினா ${current+1}`;document.getElementById("qCategory").textContent=q.cat;document.getElementById("questionEn").textContent=q.en;document.getElementById("questionTa").textContent=q.ta;document.getElementById("options").innerHTML="";
+q.opts.forEach((o,i)=>{let label=document.createElement("label");label.className="option"+(answers[current]===i?" selected":"");let radio=document.createElement("input");radio.type="radio";radio.name="answer";radio.checked=answers[current]===i;radio.addEventListener("change",()=>{answers[current]=i;render()});let text=document.createElement("span");text.textContent=String.fromCharCode(65+i)+". "+o[0];label.append(radio,text);document.getElementById("options").append(label)});
+document.getElementById("prevBtn").disabled=current===0;document.getElementById("nextBtn").textContent=current===questions.length-1?"Last question":"Next →";document.getElementById("answeredCount").textContent=answers.filter(x=>x!==null).length+" / "+questions.length;let p=document.getElementById("palette");p.innerHTML="";questions.forEach((_,i)=>{let b=document.createElement("button");b.className="num"+(answers[i]!==null?" answered":"")+(review[i]?" review":"")+(i===current?" current":"");b.textContent=i+1;b.title="Question "+(i+1);b.onclick=()=>{current=i;render()};p.append(b)})}
+function move(d){current=Math.min(questions.length-1,Math.max(0,current+d));render()}
+function clearAnswer(){answers[current]=null;render()}
+function toggleReview(){review[current]=!review[current];render()}
+function confirmSubmit(){if(confirm("Submit the test now? You cannot change answers after submission."))submitTest(false)}
+function submitTest(auto){if(finished)return;finished=true;if(clock)clearInterval(clock);let score=0;answers.forEach((a,i)=>{if(a===questions[i].ans)score++});document.getElementById("examPanel").classList.add("hidden");let panel=document.getElementById("resultPanel");panel.classList.remove("hidden");panel.innerHTML=`<div class="result"><h2>Test Result / தேர்வு முடிவு</h2><p>${auto?"Time is over. The test was submitted automatically.":"Test submitted successfully."}</p><p><strong>${escapeHtml(student)}</strong></p><div class="score">${score} / ${questions.length}</div><p>Correct: ${score} &nbsp; | &nbsp; Incorrect: ${answers.filter((a,i)=>a!==null&&a!==questions[i].ans).length} &nbsp; | &nbsp; Unanswered: ${answers.filter(a=>a===null).length}</p><button class="btn" onclick="location.reload()">Try Again / மீண்டும் முயற்சி</button></div><h3>Answer Review / விடை விளக்கம்</h3>`;
+questions.forEach((q,i)=>{let correct=q.opts[q.ans][0],picked=answers[i]===null?"Not answered / பதிலளிக்கவில்லை":q.opts[answers[i]][0];let row=document.createElement("div");row.className="review-row";row.innerHTML=`<strong>${i+1}. ${escapeHtml(q.en)}</strong><div>${escapeHtml(q.ta)}</div><div class="${answers[i]===q.ans?"correct":"wrong"}">Your answer: ${escapeHtml(picked)}</div><div class="correct">Correct answer: ${escapeHtml(correct)}</div>`;panel.append(row)})}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+</script>
+</body>
+</html>
