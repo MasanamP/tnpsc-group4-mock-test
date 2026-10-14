@@ -1,95 +1,177 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TNPSC Group 4 - Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TNPSC Group 4 Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:18px;font-family:Arial,sans-serif;background:#f3f5f9;color:#222}
-.container{max-width:1000px;margin:20px auto}.card{background:#fff;padding:22px;margin-bottom:18px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.08)}
-h1,h2,h3{margin-top:0;color:#173b70}label{display:block;margin:12px 0 6px;font-weight:bold}
-input,textarea,select{display:block;width:100%;padding:11px;border:1px solid #ccd2dc;border-radius:6px;font-size:15px;background:#fff}
-textarea{min-height:78px;resize:vertical}button{margin:12px 8px 0 0;padding:11px 16px;background:#1756a9;color:#fff;border:0;border-radius:6px;cursor:pointer;font-size:15px}
-button:hover{background:#103d7a}button:disabled{opacity:.6;cursor:wait}.hidden{display:none!important}
-.note{color:#555;font-size:14px;line-height:1.5}.success{color:#16753a}.error{color:#b42318}
-#status{padding:12px;background:#fff;border-radius:6px;overflow-wrap:anywhere}.grid,.options-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.question-box{border:1px solid #d8deea;padding:16px;border-radius:8px;margin:14px 0}.test-row{border:1px solid #d8deea;padding:12px;border-radius:8px;margin:10px 0;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.small{font-size:13px;color:#555}
-@media(max-width:650px){.grid,.options-grid{grid-template-columns:1fr}.card{padding:16px}body{padding:10px}}
+body{font-family:Arial;background:#f1f5f9;margin:0;padding:20px;color:#172554}
+main{max-width:850px;margin:auto}
+section{background:white;padding:20px;margin:16px 0;border-radius:12px;box-shadow:0 2px 8px #ddd}
+input,select,textarea{box-sizing:border-box;width:100%;padding:10px;margin:6px 0 12px;border:1px solid #bbb;border-radius:5px}
+textarea{min-height:65px}
+button{padding:11px 16px;background:#1756a9;color:white;border:0;border-radius:5px;cursor:pointer;margin:5px 0}
+.hidden{display:none!important}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#msg{overflow-wrap:anywhere}.item{padding:12px;border-bottom:1px solid #ddd}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="container">
-<h1>TNPSC Group 4 Admin Panel</h1>
-<section class="card" id="connectionCard">
-<h2>Connect to Supabase</h2>
-<label for="projectUrl">Supabase Project URL</label>
-<input id="projectUrl" type="url" value="https://ghxdslzwiizjreuosuia.supabase.co">
-<label for="publishableKey">Supabase Publishable Key</label>
-<input id="publishableKey" type="password" placeholder="Paste your Supabase publishable key" autocomplete="off">
-<button id="connectBtn" type="button">Connect to Supabase</button>
-<p class="note">Use only the publishable key (or legacy anon key). Never use a service_role or secret key in this page.</p>
+<main>
+<h1>TNPSC Group 4 — Admin Panel</h1>
+<section id="connect">
+<h2>Supabase Connection</h2>
+<label>Project URL</label>
+<input id="url" value="https://ghxdslzwiizjreuosuia.supabase.co">
+<label>Publishable Key</label>
+<input id="key" type="password" placeholder="Paste your Supabase publishable key">
+<button onclick="connectDB()">Connect</button>
 </section>
-<section class="card" id="loginCard">
+<section id="login">
 <h2>Admin Login</h2>
-<form id="loginForm">
-<label for="email">Admin Email</label><input id="email" type="email" placeholder="Enter your admin email" autocomplete="username" required>
-<label for="password">Password</label><input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
-<button id="loginBtn" type="submit">Login</button>
-</form>
+<label>Email</label><input id="email" type="email" required>
+<label>Password</label><input id="password" type="password" required>
+<button onclick="loginAdmin()">Login</button>
 </section>
-<section class="card hidden" id="dashboard">
-<h2>Welcome, Admin!</h2><p>Admin email: <strong id="adminEmail"></strong></p><button id="logoutBtn" type="button">Logout</button>
+<div id="panel" class="hidden">
+<section>
+<h2>Welcome, Admin!</h2>
+<p id="who"></p><button onclick="logout()">Logout</button>
 </section>
-<section class="card hidden" id="createTestCard">
-<h2>1. Create a Test</h2>
-<form id="testForm">
+<section>
+<h2>1. Create Test / தேர்வு உருவாக்கவும்</h2>
+<label>Test Title (English) *</label><input id="title" placeholder="TNPSC Group 4 Mock Test 1">
+<label>Test Title (Tamil)</label><input id="titleTa" placeholder="குரூப் 4 மாதிரி தேர்வு 1">
 <div class="grid">
-<div><label for="testTitle">Test Title (English) *</label><input id="testTitle" required maxlength="200" placeholder="TNPSC Group 4 Mock Test 1"></div>
-<div><label for="testTitleTa">Test Title (Tamil)</label><input id="testTitleTa" maxlength="200" placeholder="குரூப் 4 மாதிரி தேர்வு 1"></div>
-<div><label for="duration">Duration (minutes) *</label><input id="duration" type="number" min="1" max="600" value="90" required></div>
-<div><label for="testStatus">Status *</label><select id="testStatus" required><option value="draft">draft</option><option value="published">published</option></select></div>
-</div><button id="createTestBtn" type="submit">Create Test</button>
-</form><p class="note">Create the test first, then select it below to add questions.</p>
+<div><label>Duration (minutes)</label><input id="duration" type="number" value="90" min="1"></div>
+<div><label>Status</label><select id="testStatus"><option value="draft">Draft</option><option value="published">Published</option></select></div>
+</div>
+<button onclick="createTest()">Create Test</button>
 </section>
-<section class="card hidden" id="questionCard">
-<h2>2. Add Questions</h2>
-<label for="selectedTest">Choose Test</label><select id="selectedTest"><option value="">Load tests first</option></select>
-<form id="questionForm">
-<div class="question-box"><h3>Question</h3>
-<label for="questionEn">Question (English) *</label><textarea id="questionEn" required></textarea>
-<label for="questionTa">Question (Tamil)</label><textarea id="questionTa"></textarea></div>
-<div class="question-box"><h3>Options</h3><div class="options-grid">
-<div><label for="optionAEn">Option A (English) *</label><input id="optionAEn" required></div><div><label for="optionATa">Option A (Tamil)</label><input id="optionATa"></div>
-<div><label for="optionBEn">Option B (English) *</label><input id="optionBEn" required></div><div><label for="optionBTa">Option B (Tamil)</label><input id="optionBTa"></div>
-<div><label for="optionCEn">Option C (English) *</label><input id="optionCEn" required></div><div><label for="optionCTa">Option C (Tamil)</label><input id="optionCTa"></div>
-<div><label for="optionDEn">Option D (English) *</label><input id="optionDEn" required></div><div><label for="optionDTa">Option D (Tamil)</label><input id="optionDTa"></div>
+<section>
+<h2>2. Add Questions / கேள்விகள் சேர்க்கவும்</h2>
+<label>Select Test</label><select id="testSelect"><option value="">Create a test first</option></select>
+<label>Question (English) *</label><textarea id="qEn"></textarea>
+<label>Question (Tamil)</label><textarea id="qTa"></textarea>
+<div class="grid">
+<div><label>Option A (English) *</label><input id="aEn"></div>
+<div><label>Option A (Tamil)</label><input id="aTa"></div>
+<div><label>Option B (English) *</label><input id="bEn"></div>
+<div><label>Option B (Tamil)</label><input id="bTa"></div>
+<div><label>Option C (English) *</label><input id="cEn"></div>
+<div><label>Option C (Tamil)</label><input id="cTa"></div>
+<div><label>Option D (English) *</label><input id="dEn"></div>
+<div><label>Option D (Tamil)</label><input id="dTa"></div>
 </div>
-<div class="grid"><div><label for="correctOption">Correct Option *</label><select id="correctOption" required><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
-<div><label for="questionOrder">Question Number *</label><input id="questionOrder" type="number" min="1" value="1" required></div></div></div>
-<div class="question-box"><h3>Explanation (Optional)</h3><label for="explanationEn">Explanation (English)</label><textarea id="explanationEn"></textarea><label for="explanationTa">Explanation (Tamil)</label><textarea id="explanationTa"></textarea></div>
-<button id="saveQuestionBtn" type="submit">Save Question</button><button id="clearQuestionBtn" type="button">Clear Question Form</button>
-</form></section>
-<section class="card hidden" id="testsCard"><h2>3. Existing Tests</h2><button id="refreshTestsBtn" type="button">Refresh Tests</button><div id="testsList"></div></section>
-<p id="status" role="status" aria-live="polite">Enter your publishable key and connect to Supabase.</p>
+<div class="grid">
+<div><label>Correct Answer</label><select id="correct"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+<div><label>Question Number</label><input id="qOrder" type="number" min="1" value="1"></div>
 </div>
+<label>Explanation (English)</label><textarea id="expEn"></textarea>
+<label>விளக்கம் (Tamil)</label><textarea id="expTa"></textarea>
+<button onclick="saveQuestion()">Save Question</button>
+<button onclick="clearQuestion()">Clear Form</button>
+</section>
+<section>
+<h2>3. Existing Tests</h2>
+<button onclick="loadTests()">Refresh Tests</button>
+<div id="testList"></div>
+</section>
+</div>
+<p id="msg">Connect to Supabase to begin.</p>
+</main>
 <script>
-const {createClient}=window.supabase;let supabaseClient=null;let currentUser=null;const $=id=>document.getElementById(id);
-function setStatus(message,type=""){ $("status").textContent=message;$("status").className=type; }
-function busy(button,on,label){button.disabled=on;if(on){button.dataset.oldText=button.textContent;button.textContent=label||"Please wait...";}else if(button.dataset.oldText){button.textContent=button.dataset.oldText;delete button.dataset.oldText;}}
-function showLogin(){["dashboard","createTestCard","questionCard","testsCard"].forEach(id=>$(id).classList.add("hidden"));$("loginCard").classList.remove("hidden");}
-function showDashboard(user){currentUser=user;$("adminEmail").textContent=user.email||"";$("loginCard").classList.add("hidden");["dashboard","createTestCard","questionCard","testsCard"].forEach(id=>$(id).classList.remove("hidden"));}
-function connected(){if(!supabaseClient){setStatus("Enter your publishable key and click Connect to Supabase first.","error");return false;}return true;}
-$("connectBtn").addEventListener("click",()=>{const url=$("projectUrl").value.trim(),key=$("publishableKey").value.trim();if(!url||!key){setStatus("Please enter both Project URL and Publishable Key.","error");return;}try{const parsed=new URL(url);if(parsed.protocol!=="https:"||parsed.hostname!=="ghxdslzwiizjreuosuia.supabase.co"){setStatus("Please check your Supabase Project URL.","error");return;}supabaseClient=createClient(url,key);setStatus("Supabase connected. You can now log in.","success");}catch(e){supabaseClient=null;setStatus("Invalid Project URL.","error");}});
-async function checkAdmin(user){setStatus("Checking admin permission...");const {data,error}=await supabaseClient.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();if(error){showLogin();setStatus("Admin permission check failed: "+error.message,"error");return false;}if(!data){await supabaseClient.auth.signOut();showLogin();setStatus("This account is not listed in admin_users table.","error");return false;}showDashboard(user);await loadTests();setStatus("Admin login successful. Dashboard is ready.","success");return true;}
-$("loginForm").addEventListener("submit",async e=>{e.preventDefault();if(!connected())return;busy($("loginBtn"),true,"Signing in...");try{const {data,error}=await supabaseClient.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){setStatus("Login failed: "+error.message,"error");return;}await checkAdmin(data.user);}catch(e){setStatus("Unexpected error: "+e.message,"error");}finally{busy($("loginBtn"),false);}});
-$("logoutBtn").addEventListener("click",async()=>{if(!supabaseClient)return;try{const {error}=await supabaseClient.auth.signOut();if(error)throw error;currentUser=null;showLogin();$("loginForm").reset();setStatus("Logged out successfully.","success");}catch(e){setStatus("Logout failed: "+e.message,"error");}});
-$("testForm").addEventListener("submit",async e=>{e.preventDefault();if(!connected())return;if(!currentUser){setStatus("Please log in as admin first.","error");return;}busy($("createTestBtn"),true,"Creating test...");try{const payload={title:$("testTitle").value.trim(),title_ta:$("testTitleTa").value.trim()||null,duration_minutes:Number($("duration").value),status:$("testStatus").value};const {data,error}=await supabaseClient.from("tests").insert(payload).select("id,title,title_ta,duration_minutes,status").single();if(error)throw error;setStatus("Test created successfully. Test ID: "+data.id,"success");$("testForm").reset();$("duration").value=90;$("testStatus").value="draft";await loadTests(data.id);}catch(e){setStatus("Could not create test: "+e.message+". Check tests table permissions/RLS.","error");}finally{busy($("createTestBtn"),false);}});
-async function loadTests(selectId=null){if(!supabaseClient)return;const {data,error}=await supabaseClient.from("tests").select("id,title,title_ta,duration_minutes,status,created_at").order("id",{ascending:false});if(error){$("selectedTest").replaceChildren(new Option("Unable to load tests",""));$("testsList").textContent="Could not load tests: "+error.message;setStatus("Could not load tests: "+error.message+". Check tests table SELECT policy.","error");return;}const select=$("selectedTest");select.replaceChildren();if(!data||!data.length){select.add(new Option("No tests yet — create a test above",""));$("testsList").textContent="No tests created yet.";return;}data.forEach(t=>select.add(new Option("#"+t.id+" — "+t.title,String(t.id))));if(selectId!==null)select.value=String(selectId);const list=$("testsList");list.replaceChildren();data.forEach(t=>{const row=document.createElement("div");row.className="test-row";const info=document.createElement("div"),title=document.createElement("strong"),details=document.createElement("div");title.textContent="#"+t.id+" — "+t.title;details.className="small";details.textContent=(t.title_ta||"")+" | "+t.duration_minutes+" minutes | Status: "+t.status;info.append(title,details);const btn=document.createElement("button");btn.type="button";btn.textContent="Add Questions";btn.addEventListener("click",()=>{select.value=String(t.id);$("questionCard").scrollIntoView({behavior:"smooth",block:"start"});setStatus("Selected test #"+t.id+". Add a question below.","success");});row.append(info,btn);list.append(row);});}
-$("refreshTestsBtn").addEventListener("click",()=>loadTests());
-$("selectedTest").addEventListener("change",async()=>{const id=$("selectedTest").value;if(!id||!supabaseClient)return;const {data,error}=await supabaseClient.from("questions").select("question_order").eq("test_id",Number(id)).order("question_order",{ascending:false}).limit(1);if(!error&&data)$("questionOrder").value=data.length?Number(data[0].question_order)+1:1;});
-$("questionForm").addEventListener("submit",async e=>{e.preventDefault();if(!connected())return;if(!currentUser){setStatus("Please log in as admin first.","error");return;}const testId=$("selectedTest").value;if(!testId){setStatus("Create or select a test before saving questions.","error");return;}busy($("saveQuestionBtn"),true,"Saving question...");try{const payload={test_id:Number(testId),question_en:$("questionEn").value.trim(),question_ta:$("questionTa").value.trim()||null,option_a_en:$("optionAEn").value.trim(),option_b_en:$("optionBEn").value.trim(),option_c_en:$("optionCEn").value.trim(),option_d_en:$("optionDEn").value.trim(),option_a_ta:$("optionATa").value.trim()||null,option_b_ta:$("optionBTa").value.trim()||null,option_c_ta:$("optionCTa").value.trim()||null,option_d_ta:$("optionDTa").value.trim()||null,correct_option:$("correctOption").value,explanation_en:$("explanationEn").value.trim()||null,explanation_ta:$("explanationTa").value.trim()||null,question_order:Number($("questionOrder").value)};const {data,error}=await supabaseClient.from("questions").insert(payload).select("id,question_order").single();if(error)throw error;setStatus("Question "+data.question_order+" saved successfully (Question ID: "+data.id+").","success");$("questionForm").reset();$("questionOrder").value=Number(payload.question_order)+1;$("correctOption").value="A";}catch(e){setStatus("Could not save question: "+e.message+". Check questions table permissions/RLS.","error");}finally{busy($("saveQuestionBtn"),false);}});
-$("clearQuestionBtn").addEventListener("click",()=>{const next=$("questionOrder").value;$("questionForm").reset();$("questionOrder").value=next||1;$("correctOption").value="A";});
+let db=null,user=null;
+const el=id=>document.getElementById(id);
+function message(t){el("msg").textContent=t;}
+function connectDB(){
+ const url=el("url").value.trim(),key=el("key").value.trim();
+ if(!url||!key){message("Enter Project URL and publishable key.");return;}
+ try{db=supabase.createClient(url,key);message("Connected. Please login.");}
+ catch(e){message("Connection error: "+e.message);}
+}
+async function loginAdmin(){
+ if(!db){message("Click Connect first.");return;}
+ const {data,error}=await db.auth.signInWithPassword({
+  email:el("email").value.trim(),password:el("password").value
+ });
+ if(error){message("Login failed: "+error.message);return;}
+ user=data.user;
+ const r=await db.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle();
+ if(r.error||!r.data){
+  await db.auth.signOut();user=null;
+  message("Admin permission error: "+(r.error?.message||"User not found in admin_users"));return;
+ }
+ el("login").classList.add("hidden");
+ el("connect").classList.add("hidden");
+ el("panel").classList.remove("hidden");
+ el("who").textContent="Logged in: "+user.email;
+ message("Admin login successful.");
+ await loadTests();
+}
+async function logout(){
+ if(db)await db.auth.signOut();
+ user=null;location.reload();
+}
+async function createTest(){
+ if(!user)return message("Please login first.");
+ if(!el("title").value.trim())return message("Enter test title.");
+ const payload={
+  title:el("title").value.trim(),
+  title_ta:el("titleTa").value.trim()||null,
+  duration_minutes:Number(el("duration").value),
+  status:el("testStatus").value
+ };
+ const {data,error}=await db.from("tests").insert(payload).select("id").single();
+ if(error)return message("Create test failed: "+error.message);
+ message("Test created successfully. ID: "+data.id);
+ el("title").value="";el("titleTa").value="";
+ await loadTests(data.id);
+}
+async function loadTests(selectedId){
+ const {data,error}=await db.from("tests").select("id,title,title_ta,duration_minutes,status").order("id",{ascending:false});
+ if(error)return message("Load tests failed: "+error.message);
+ const s=el("testSelect"),list=el("testList");s.replaceChildren();list.replaceChildren();
+ if(!data.length){s.add(new Option("No tests yet",""));list.textContent="No tests created.";return;}
+ data.forEach(t=>{
+  s.add(new Option("#"+t.id+" - "+t.title,t.id));
+  const d=document.createElement("div");d.className="item";
+  d.textContent="#"+t.id+" | "+t.title+" | "+(t.title_ta||"")+" | "+t.duration_minutes+" min | "+t.status+" ";
+  const b=document.createElement("button");b.textContent="Select";
+  b.onclick=()=>{s.value=t.id;el("qOrder").value="1";message("Selected test #"+t.id);};
+  d.appendChild(b);list.appendChild(d);
+ });
+ if(selectedId)s.value=String(selectedId);
+}
+async function saveQuestion(){
+ if(!user)return message("Please login first.");
+ const testId=el("testSelect").value;
+ if(!testId)return message("Select a test first.");
+ const required=["qEn","aEn","bEn","cEn","dEn"];
+ for(const id of required)if(!el(id).value.trim())return message("Fill all required English question and option fields.");
+ const payload={
+  test_id:Number(testId),question_en:el("qEn").value.trim(),
+  question_ta:el("qTa").value.trim()||null,
+  option_a_en:el("aEn").value.trim(),option_a_ta:el("aTa").value.trim()||null,
+  option_b_en:el("bEn").value.trim(),option_b_ta:el("bTa").value.trim()||null,
+  option_c_en:el("cEn").value.trim(),option_c_ta:el("cTa").value.trim()||null,
+  option_d_en:el("dEn").value.trim(),option_d_ta:el("dTa").value.trim()||null,
+  correct_option:el("correct").value,
+  question_order:Number(el("qOrder").value),
+  explanation_en:el("expEn").value.trim()||null,
+  explanation_ta:el("expTa").value.trim()||null
+ };
+ const {data,error}=await db.from("questions").insert(payload).select("id,question_order").single();
+ if(error)return message("Save question failed: "+error.message);
+ message("Question "+data.question_order+" saved successfully.");
+ clearQuestion();el("qOrder").value=Number(payload.question_order)+1;
+}
+function clearQuestion(){
+ ["qEn","qTa","aEn","aTa","bEn","bTa","cEn","cTa","dEn","dTa","expEn","expTa"].forEach(id=>el(id).value="");
+ el("correct").value="A";
+}
 </script>
 </body>
 </html>
