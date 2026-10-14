@@ -97,12 +97,12 @@
     }
 
     function showDashboard(user) {
-      document.getElementById("adminEmail").textContent = user.email || "";
-      dashboard.classList.remove("hidden");
-      loginCard.querySelector("form").classList.add("hidden");
-      logoutBtn.classList.remove("hidden");
-      status("Logged in. Checking admin permission...");
-    }
+  document.getElementById("adminEmail").textContent = user.email || "";
+  document.getElementById("dashboard").classList.remove("hidden");
+  document.querySelector("#loginForm").classList.add("hidden");
+  document.getElementById("logoutBtn").classList.remove("hidden");
+  status("Admin login successful.");
+}
 
     document.getElementById("connectBtn").addEventListener("click", async () => {
       const url = document.getElementById("projectUrl").value.trim();
