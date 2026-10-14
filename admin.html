@@ -5,203 +5,394 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TNPSC Group 4 - Admin Panel</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      max-width: 650px;
-      margin: 40px auto;
+      margin: 0;
       padding: 20px;
-      background: #f4f6f9;
+      font-family: Arial, sans-serif;
+      background: #f3f5f9;
       color: #222;
     }
+
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+    }
+
     .card {
       background: white;
       padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px #0001;
       margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
     }
-    input, button {
-      box-sizing: border-box;
+
+    h1, h2 {
+      margin-top: 0;
+      color: #173b70;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: bold;
+    }
+
+    input {
+      display: block;
       width: 100%;
       padding: 12px;
-      margin-top: 12px;
+      border: 1px solid #ccd2dc;
       border-radius: 6px;
-      font-size: 16px;
+      font-size: 15px;
     }
-    input { border: 1px solid #bbb; }
+
     button {
-      border: 0;
-      background: #1457c5;
+      margin-top: 16px;
+      padding: 12px 18px;
+      background: #1756a9;
       color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
+      font-size: 15px;
     }
-    button:disabled { opacity: .6; }
-    #status { margin-top: 16px; white-space: pre-wrap; }
-    .hidden { display: none; }
+
+    button:hover {
+      background: #103d7a;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #status {
+      padding: 12px;
+      background: #fff;
+      border-radius: 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .success {
+      color: #16753a;
+    }
+
+    .error {
+      color: #b42318;
+    }
+
+    .note {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.5;
+    }
   </style>
 </head>
+
 <body>
-  <h1>TNPSC Group 4</h1>
-  <p>Admin Panel</p>
+  <div class="container">
 
-  <section class="card" id="setup">
-    <h2>Connect Supabase</h2>
-    <label for="projectUrl">Project URL</label>
-    <input id="projectUrl"
-      value="https://ghxdslzwiizjreuosuia.supabase.co"
-      autocomplete="url">
+    <h1>TNPSC Group 4 Admin Panel</h1>
 
-    <label for="publishableKey">Publishable Key</label>
-    <input id="publishableKey"
-      placeholder="Paste your sb_publishable_ key"
-      autocomplete="off">
+    <section class="card">
+      <h2>Connect to Supabase</h2>
 
-    <button id="connectBtn">Connect</button>
-  </section>
+      <label for="projectUrl">Supabase Project URL</label>
+      <input
+        id="projectUrl"
+        type="url"
+        value="https://ghxdslzwiizjreuosuia.supabase.co"
+        placeholder="https://your-project.supabase.co"
+      >
 
-  <section class="card hidden" id="loginCard">
-    <h2>Admin Login</h2>
-    <form id="loginForm">
-      <label for="email">Admin Email</label>
-      <input id="email" type="email" required autocomplete="username">
-      <label for="password">Password</label>
-      <input id="password" type="password" required
-        autocomplete="current-password">
-      <button type="submit">Login</button>
-    </form>
-    <button id="logoutBtn" class="hidden">Logout</button>
-  </section>
+      <label for="publishableKey">Supabase Publishable Key</label>
+      <input
+        id="publishableKey"
+        type="password"
+        placeholder="Paste your Supabase publishable key"
+        autocomplete="off"
+      >
 
-  <section class="card hidden" id="dashboard">
-    <h2>Welcome, Admin</h2>
-    <p id="adminEmail"></p>
-    <p>Your Supabase login is active.</p>
-    <p>Next: test creation and question management.</p>
-  </section>
+      <button id="connectBtn" type="button">
+        Connect to Supabase
+      </button>
 
-  <p id="status" role="status">Enter your publishable key to connect.</p>
+      <p class="note">
+        Use your Supabase publishable key (or legacy anon key).
+        Never paste your service_role or secret key here.
+      </p>
+    </section>
+
+    <section class="card" id="loginCard">
+      <h2>Admin Login</h2>
+
+      <form id="loginForm">
+        <label for="email">Admin Email</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="Enter your admin email"
+          autocomplete="username"
+          required
+        >
+
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button id="loginBtn" type="submit">
+          Login
+        </button>
+      </form>
+    </section>
+
+    <section class="card hidden" id="dashboard">
+      <h2>Welcome, Admin!</h2>
+      <p>Admin email: <strong id="adminEmail"></strong></p>
+      <p class="success">Your admin login is active.</p>
+
+      <hr>
+
+      <h3>Dashboard</h3>
+      <p>Next: Create tests and manage bilingual questions.</p>
+      <p class="note">
+        Test creation and question management are not yet added
+        to this basic dashboard.
+      </p>
+
+      <button id="logoutBtn" type="button">
+        Logout
+      </button>
+    </section>
+
+    <p id="status" role="status" aria-live="polite">
+      Enter your publishable key and connect to Supabase.
+    </p>
+
+  </div>
 
   <script>
+    const {
+      createClient
+    } = window.supabase;
+
     let supabaseClient = null;
 
-    const statusEl = document.getElementById("status");
-    const setup = document.getElementById("setup");
-    const loginCard = document.getElementById("loginCard");
-    const dashboard = document.getElementById("dashboard");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const projectUrlInput =
+      document.getElementById("projectUrl");
 
-    function status(message) {
-      statusEl.textContent = message;
+    const publishableKeyInput =
+      document.getElementById("publishableKey");
+
+    const connectBtn =
+      document.getElementById("connectBtn");
+
+    const loginCard =
+      document.getElementById("loginCard");
+
+    const loginForm =
+      document.getElementById("loginForm");
+
+    const loginBtn =
+      document.getElementById("loginBtn");
+
+    const dashboard =
+      document.getElementById("dashboard");
+
+    const logoutBtn =
+      document.getElementById("logoutBtn");
+
+    const adminEmail =
+      document.getElementById("adminEmail");
+
+    const statusElement =
+      document.getElementById("status");
+
+    function status(message, type = "") {
+      statusElement.textContent = message;
+      statusElement.className = type;
     }
 
-    
-function showDashboard(user) {
-  const dashboard = document.getElementById("dashboard");
-  const loginForm = document.querySelector("#loginForm");
-  const loginCard = document.getElementById("loginCard");
-  const logoutBtn = document.getElementById("logoutBtn");
+    function showLogin() {
+      dashboard.classList.add("hidden");
+      loginCard.classList.remove("hidden");
+      loginForm.classList.remove("hidden");
+    }
 
-  if (dashboard) {
-    dashboard.classList.remove("hidden");
-    dashboard.style.display = "block";
-  }
+    function showDashboard(user) {
+      dashboard.classList.remove("hidden");
+      dashboard.style.display = "block";
 
-  if (loginForm) {
-    loginForm.classList.add("hidden");
-  }
+      loginCard.classList.add("hidden");
+      loginForm.classList.add("hidden");
 
-  if (loginCard) {
-    loginCard.querySelector("form")?.classList.add("hidden");
-  }
+      adminEmail.textContent = user.email || "";
+    }
 
-  if (logoutBtn) {
-    logoutBtn.classList.remove("hidden");
-  }
+    connectBtn.addEventListener("click", () => {
+      const projectUrl = projectUrlInput.value.trim();
+      const publishableKey = publishableKeyInput.value.trim();
 
-  const adminEmail = document.getElementById("adminEmail");
-  if (adminEmail) {
-    adminEmail.textContent = user.email || "";
-  }
-}
-
-    document.getElementById("connectBtn").addEventListener("click", async () => {
-      const url = document.getElementById("projectUrl").value.trim();
-      const key = document.getElementById("publishableKey").value.trim();
-
-      if (!url.startsWith("https://") || !key) {
-        status("Please enter the Project URL and Publishable Key.");
+      if (!projectUrl || !publishableKey) {
+        status(
+          "Please enter both the Project URL and Publishable Key.",
+          "error"
+        );
         return;
       }
 
       try {
-        supabaseClient = window.supabase.createClient(url, key);
-        const { data, error } = await supabaseClient.auth.getSession();
-        if (error) throw error;
+        const parsedUrl = new URL(projectUrl);
 
-        setup.classList.add("hidden");
-        loginCard.classList.remove("hidden");
-
-        if (data.session) {
-          await checkAdmin(data.session.user);
-        } else {
-          status("Connected. Please sign in with your Admin email and password.");
+        if (
+          parsedUrl.protocol !== "https:" ||
+          parsedUrl.hostname !==
+            "ghxdslzwiizjreuosuia.supabase.co"
+        ) {
+          status(
+            "Please check your Supabase Project URL.",
+            "error"
+          );
+          return;
         }
+
+        supabaseClient = createClient(
+          projectUrl,
+          publishableKey
+        );
+
+        status(
+          "Supabase client configured. You can now log in.",
+          "success"
+        );
       } catch (error) {
-        status("Connection failed: " + error.message);
+        supabaseClient = null;
+        status("Invalid Project URL.", "error");
       }
     });
 
     async function checkAdmin(user) {
+      status("Checking admin permission...");
+
       const { data, error } = await supabaseClient
         .from("admin_users")
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error || !data) {
-        dashboard.classList.add("hidden");
-        loginCard.querySelector("form").classList.remove("hidden");
-        logoutBtn.classList.add("hidden");
-        status("This account does not have Admin access. Check the Supabase admin_users table.");
+      if (error) {
+        showLogin();
+        status(
+          "Admin permission check failed: " + error.message,
+          "error"
+        );
+        return;
+      }
+
+      if (!data) {
+        await supabaseClient.auth.signOut();
+        showLogin();
+
+        status(
+          "This account is not listed in the admin_users table.",
+          "error"
+        );
         return;
       }
 
       showDashboard(user);
-      status("Admin login successful.");
+
+      status(
+        "Admin login successful. Dashboard is displayed.",
+        "success"
+      );
     }
 
-    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+    loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
+
       if (!supabaseClient) {
-        status("Connect to Supabase first.");
+        status(
+          "Please connect to Supabase first.",
+          "error"
+        );
         return;
       }
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+      const email =
+        document.getElementById("email").value.trim();
+
+      const password =
+        document.getElementById("password").value;
+
+      loginBtn.disabled = true;
       status("Signing in...");
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
+      try {
+        const { data, error } =
+          await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+          });
 
-      if (error) {
-        status("Login failed: " + error.message);
-        return;
+        if (error) {
+          status("Login failed: " + error.message, "error");
+          return;
+        }
+
+        await checkAdmin(data.user);
+
+      } catch (error) {
+        status(
+          "Unexpected error: " + error.message,
+          "error"
+        );
+      } finally {
+        loginBtn.disabled = false;
       }
-
-      await checkAdmin(data.user);
     });
 
     logoutBtn.addEventListener("click", async () => {
-      await supabaseClient.auth.signOut();
-      dashboard.classList.add("hidden");
-      loginCard.querySelector("form").classList.remove("hidden");
-      logoutBtn.classList.add("hidden");
-      status("Logged out.");
+      if (!supabaseClient) return;
+
+      logoutBtn.disabled = true;
+
+      try {
+        const { error } =
+          await supabaseClient.auth.signOut();
+
+        if (error) {
+          status("Logout failed: " + error.message, "error");
+          return;
+        }
+
+        showLogin();
+        loginForm.reset();
+
+        status("Logged out successfully.", "success");
+
+      } catch (error) {
+        status("Logout error: " + error.message, "error");
+      } finally {
+        logoutBtn.disabled = false;
+      }
     });
   </script>
 </body>
