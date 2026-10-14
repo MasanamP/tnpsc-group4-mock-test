@@ -96,13 +96,35 @@
       statusEl.textContent = message;
     }
 
-    function showDashboard(user) {
-  document.getElementById("adminEmail").textContent = user.email || "";
-  document.getElementById("dashboard").classList.remove("hidden");
-  document.querySelector("#loginForm").classList.add("hidden");
-  document.getElementById("logoutBtn").classList.remove("hidden");
-  status("Admin login successful.");
-    }
+    
+function showDashboard(user) {
+  const dashboard = document.getElementById("dashboard");
+  const loginForm = document.querySelector("#loginForm");
+  const loginCard = document.getElementById("loginCard");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (dashboard) {
+    dashboard.classList.remove("hidden");
+    dashboard.style.display = "block";
+  }
+
+  if (loginForm) {
+    loginForm.classList.add("hidden");
+  }
+
+  if (loginCard) {
+    loginCard.querySelector("form")?.classList.add("hidden");
+  }
+
+  if (logoutBtn) {
+    logoutBtn.classList.remove("hidden");
+  }
+
+  const adminEmail = document.getElementById("adminEmail");
+  if (adminEmail) {
+    adminEmail.textContent = user.email || "";
+  }
+}
 
     document.getElementById("connectBtn").addEventListener("click", async () => {
       const url = document.getElementById("projectUrl").value.trim();
