@@ -283,18 +283,59 @@ $("submitBtn").addEventListener("click",() => {
 });
 
 function finishTest(autoSubmit) {
+  async function finishTest(autoSubmit) {
   if (submitted) return;
+
   submitted = true;
   clearInterval(timerHandle);
+  $("submitBtn").disabled = true;
+  message("Submitting test and saving result...");
 
-  // IMPORTANT: score is not calculated in this student browser.
-  // Do not fetch answer keys into public client-side JavaScript.
-  showOnly("result");
-  $("score").textContent = autoSubmit
-    ? "Time is over. Your answers have been submitted locally."
-    : "Your answers have been recorded in this page. Secure scoring and result saving require a server-side submission function.";
-  message("Answered " + Object.keys(answers).length +
-    " of " + questions.length + " questions.");
+  try {
+    const { data, error } = await db.functions.invoke("submit-test", {
+      body: {
+        test_id: currentTest.id,
+        answers: questions.map(q => ({
+          question_id: q.id,
+          selected_option: answers[q.id] || null
+        }))
+      }
+    });
+
+    if (error) {
+      let details = error.message || "Unknown error";
+      if (error.context) {
+        try {
+          const body = await error.context.json();
+          details = body.message || body.error || details;
+        } catch (_) {}
+      }
+      throw new Error(details);
+    }
+
+    if (!data || data.error) {
+      throw new Error(data?.error || "No result received.");
+    }
+
+    showOnly("result");
+    $("score").textContent =
+      "Test submitted successfully!\n" +
+      "Score: " + data.score + " / " + data.total_questions + "\n" +
+      "Correct: " + data.correct_answers + "\n" +
+      "Wrong: " + data.wrong_answers + "\n" +
+      "Unanswered: " + data.unanswered;
+
+    message("Your test result has been saved successfully.");
+  } catch (e) {
+    submitted = false;
+    $("submitBtn").disabled = false;
+    showOnly("exam");
+    message(
+      "Result could not be saved: " + (e.message || "Unknown error") +
+      "\nPlease try Submit Test again.",
+      true
+    );
+  }
 }
 
 function backToTests() {
