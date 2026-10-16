@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TNPSC Group 4 - Student Portal</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
@@ -20,11 +21,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .test-card{border:1px solid #dbe3ee;border-radius:9px;padding:15px;margin:12px 0}
 .option{display:block;background:#f8fafc;border:1px solid #dbe3ee;padding:12px;margin:9px 0;border-radius:7px;cursor:pointer}
 .option input{width:auto;margin:0 8px 0 0}
-#portal,#exam{display:none}
+#portal,#exam,#result{display:none}
 #message{white-space:pre-wrap;overflow-wrap:anywhere}
 #timer{font-size:20px;font-weight:bold;color:#b91c1c}
 </style>
 </head>
+
 <body>
 <header>
   <h1>TNPSC Group 4</h1>
@@ -34,10 +36,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <main>
   <section id="login" class="panel">
     <h2>Student Login / மாணவர் உள்நுழைவு</h2>
+
     <label for="email">Email Address</label>
     <input id="email" type="email" autocomplete="email" placeholder="Enter email">
+
     <label for="password">Password</label>
     <input id="password" type="password" autocomplete="current-password" placeholder="Enter password">
+
     <button id="loginBtn">Login</button>
     <button id="signupBtn" class="secondary">Create Account</button>
   </section>
@@ -50,6 +55,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
       <button id="logoutBtn">Logout</button>
     </div>
+
     <h3>Available Mock Tests</h3>
     <p class="muted">Published tests மட்டும் இங்கு காட்டப்படும்.</p>
     <button id="refreshBtn" class="secondary">Refresh Tests</button>
@@ -62,6 +68,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <p id="progress"></p>
     <p id="timer">Time: --:--</p>
     <div id="questionArea"></div>
+
     <div>
       <button id="previousBtn">Previous</button>
       <button id="nextBtn" class="secondary">Next</button>
@@ -69,9 +76,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
   </section>
 
-  <section id="result" class="panel" style="display:none">
-    <h2>Test Result</h2>
-    <p id="score"></p>
+  <section id="result" class="panel">
+    <h2>Test Result / தேர்வு முடிவு</h2>
+    <p id="score" style="white-space:pre-wrap"></p>
     <button id="resultBackBtn">Back to Tests</button>
   </section>
 
@@ -81,15 +88,22 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </main>
 
 <script>
+"use strict";
+
+// Supabase project settings
 const SUPABASE_URL = "https://ghxdslzwiizjreuosuia.supabase.co";
 
-// உங்கள் ஏற்கெனவே உள்ள Publishable Key-ஐ இங்கே வைக்கவும்.
-// Secret / service_role key பயன்படுத்த வேண்டாம்.
+// Use your current Supabase Publishable Key.
+// Never put a service_role or secret key in this file.
 const SUPABASE_KEY = "sb_publishable__tKJU7MQ22Za4EJY2q4JLA_i692m4jo";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
 const $ = id => document.getElementById(id);
+
 let currentUser = null;
 let currentTest = null;
 let questions = [];
@@ -98,70 +112,93 @@ let questionIndex = 0;
 let timerHandle = null;
 let endTime = 0;
 let submitted = false;
+let submitting = false;
 
-function message(text, error=false) {
-  $("message").textContent = text;
+function message(text, error = false) {
+  $("message").textContent = text || "";
   $("message").style.color = error ? "#b91c1c" : "#166534";
 }
 
 function showOnly(section) {
-  ["login","portal","exam","result"].forEach(id => {
+  ["login", "portal", "exam", "result"].forEach(id => {
     $(id).style.display = id === section ? "block" : "none";
   });
 }
 
 function safeText(tag, text) {
-  const el = document.createElement(tag);
-  el.textContent = text ?? "";
-  return el;
+  const element = document.createElement(tag);
+  element.textContent = text ?? "";
+  return element;
 }
 
 async function loadTests() {
-  $("testsList").replaceChildren(safeText("p","Loading tests..."));
+  $("testsList").replaceChildren(
+    safeText("p", "Loading tests...")
+  );
   message("");
 
-  // RLS must restrict this query to published tests.
   const { data, error } = await db
     .from("tests")
     .select("id,title,title_ta,duration_minutes,status")
-    .eq("status","published")
-    .order("id",{ascending:false});
+    .eq("status", "published")
+    .order("id", { ascending: false });
 
   if (error) {
     $("testsList").replaceChildren();
-    message("Could not load tests: " + error.message,true);
+    message("Could not load tests: " + error.message, true);
     return;
   }
 
   $("testsList").replaceChildren();
 
   if (!data || data.length === 0) {
-    $("testsList").append(safeText("p","No published tests available yet."));
+    $("testsList").append(
+      safeText("p", "No published tests available yet.")
+    );
     return;
   }
 
   data.forEach(test => {
     const card = document.createElement("div");
     card.className = "test-card";
-    card.append(safeText("h3",test.title || "TNPSC Group 4 Mock Test"));
 
-    if (test.title_ta) card.append(safeText("p",test.title_ta));
+    card.append(
+      safeText("h3", test.title || "TNPSC Group 4 Mock Test")
+    );
 
-    card.append(safeText("p",
-      "Duration: " + (test.duration_minutes || 15) + " minutes"));
+    if (test.title_ta) {
+      card.append(safeText("p", test.title_ta));
+    }
 
-    const btn = safeText("button","Start Test");
-    btn.addEventListener("click", () => startTest(test));
-    card.append(btn);
+    card.append(
+      safeText(
+        "p",
+        "Duration: " + (Number(test.duration_minutes) || 15) + " minutes"
+      )
+    );
+
+    const button = safeText("button", "Start Test");
+    button.addEventListener("click", () => startTest(test));
+    card.append(button);
+
     $("testsList").append(card);
   });
 }
 
 async function startTest(test) {
-  message("Loading questions...");
-  submitted = false;
+  if (!currentUser) {
+    message("Please login before starting a test.", true);
+    showOnly("login");
+    return;
+  }
 
-  // Do not select the answer key or explanation for the student.
+  clearInterval(timerHandle);
+  submitted = false;
+  submitting = false;
+  $("submitBtn").disabled = false;
+  $("submitBtn").textContent = "Submit Test";
+  message("Loading questions...");
+
   const { data, error } = await db
     .from("questions")
     .select(
@@ -169,16 +206,19 @@ async function startTest(test) {
       "option_a_en,option_b_en,option_c_en,option_d_en," +
       "option_a_ta,option_b_ta,option_c_ta,option_d_ta"
     )
-    .eq("test_id",test.id)
-    .order("id",{ascending:true});
+    .eq("test_id", test.id)
+    .order("id", { ascending: true });
 
   if (error) {
-    message("Could not load questions: " + error.message,true);
+    message("Could not load questions: " + error.message, true);
     return;
   }
 
   if (!data || data.length === 0) {
-    message("இந்த test-ல் questions இல்லை. Admin Panel-ல் questions சேர்க்கவும்.",true);
+    message(
+      "இந்த test-ல் questions இல்லை. Admin Panel-ல் questions சேர்க்கவும்.",
+      true
+    );
     return;
   }
 
@@ -187,32 +227,46 @@ async function startTest(test) {
   answers = {};
   questionIndex = 0;
 
-  $("examTitle").textContent = test.title || "TNPSC Group 4 Mock Test";
+  $("examTitle").textContent =
+    test.title || "TNPSC Group 4 Mock Test";
+
   $("result").style.display = "none";
   showOnly("exam");
   message("");
 
-  endTime = Date.now() +
-    Math.max(1,Number(test.duration_minutes) || 15) * 60 * 1000;
+  const durationMinutes = Math.max(
+    1,
+    Number(test.duration_minutes) || 15
+  );
 
-  clearInterval(timerHandle);
+  endTime = Date.now() + durationMinutes * 60 * 1000;
+
   updateTimer();
-  timerHandle = setInterval(updateTimer,1000);
+  timerHandle = setInterval(updateTimer, 1000);
+
   renderQuestion();
 }
 
 function updateTimer() {
-  if (submitted || !currentTest) return;
+  if (submitted || submitting || !currentTest) return;
 
-  const seconds = Math.max(0,Math.ceil((endTime-Date.now())/1000));
-  const minutes = Math.floor(seconds/60);
-  const remainder = seconds%60;
+  const seconds = Math.max(
+    0,
+    Math.ceil((endTime - Date.now()) / 1000)
+  );
+
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
 
   $("timer").textContent =
-    "Time: " + String(minutes).padStart(2,"0") + ":" +
-    String(remainder).padStart(2,"0");
+    "Time: " +
+    String(minutes).padStart(2, "0") + ":" +
+    String(remainder).padStart(2, "0");
 
-  if (seconds <= 0) finishTest(true);
+  if (seconds <= 0) {
+    clearInterval(timerHandle);
+    finishTest(true);
+  }
 }
 
 function renderQuestion() {
@@ -220,24 +274,31 @@ function renderQuestion() {
   if (!q) return;
 
   $("progress").textContent =
-    "Question " + (questionIndex+1) + " of " + questions.length;
+    "Question " + (questionIndex + 1) +
+    " of " + questions.length;
 
   const area = $("questionArea");
   area.replaceChildren();
 
-  area.append(safeText("h3",
-    (questionIndex+1) + ". " + (q.question_en || "")));
+  area.append(
+    safeText(
+      "h3",
+      (questionIndex + 1) + ". " + (q.question_en || "")
+    )
+  );
 
-  if (q.question_ta) area.append(safeText("p",q.question_ta));
+  if (q.question_ta) {
+    area.append(safeText("p", q.question_ta));
+  }
 
   const options = [
-    ["A",q.option_a_en,q.option_a_ta],
-    ["B",q.option_b_en,q.option_b_ta],
-    ["C",q.option_c_en,q.option_c_ta],
-    ["D",q.option_d_en,q.option_d_ta]
+    ["A", q.option_a_en, q.option_a_ta],
+    ["B", q.option_b_en, q.option_b_ta],
+    ["C", q.option_c_en, q.option_c_ta],
+    ["D", q.option_d_en, q.option_d_ta]
   ];
 
-  options.forEach(([key,en,ta]) => {
+  options.forEach(([key, english, tamil]) => {
     const label = document.createElement("label");
     label.className = "option";
 
@@ -246,50 +307,68 @@ function renderQuestion() {
     radio.name = "answer";
     radio.value = key;
     radio.checked = answers[q.id] === key;
-    radio.addEventListener("change",() => { answers[q.id] = key; });
+    radio.addEventListener("change", () => {
+      answers[q.id] = key;
+    });
 
-    label.append(radio,document.createTextNode(
-      key + ". " + (en || "")
-    ));
+    label.append(
+      radio,
+      document.createTextNode(key + ". " + (english || ""))
+    );
 
-    if (ta) {
+    if (tamil) {
       label.append(document.createElement("br"));
-      label.append(document.createTextNode(ta));
+      label.append(document.createTextNode(tamil));
     }
 
     area.append(label);
   });
 
   $("previousBtn").disabled = questionIndex === 0;
-  $("nextBtn").disabled = questionIndex === questions.length-1;
+  $("nextBtn").disabled = questionIndex === questions.length - 1;
 }
 
-$("nextBtn").addEventListener("click",() => {
-  if (questionIndex < questions.length-1) {
+$("nextBtn").addEventListener("click", () => {
+  if (questionIndex < questions.length - 1) {
     questionIndex++;
     renderQuestion();
   }
 });
 
-$("previousBtn").addEventListener("click",() => {
+$("previousBtn").addEventListener("click", () => {
   if (questionIndex > 0) {
     questionIndex--;
     renderQuestion();
   }
 });
 
-$("submitBtn").addEventListener("click",() => {
-  if (confirm("Submit this test now?")) finishTest(false);
+$("submitBtn").addEventListener("click", () => {
+  if (submitted || submitting) return;
+
+  if (confirm("Submit this test now?")) {
+    finishTest(false);
+  }
 });
 
-function finishTest(autoSubmit) {
-  async function finishTest(autoSubmit) {
-  if (submitted) return;
+// Send answers to the Supabase Edge Function.
+// Scoring must be performed by the server, not this browser.
+async function finishTest(autoSubmit) {
+  if (submitted || submitting) return;
 
-  submitted = true;
+  if (!currentTest || !questions.length) {
+    message("No active test found.", true);
+    return;
+  }
+
+  submitting = true;
   clearInterval(timerHandle);
   $("submitBtn").disabled = true;
-  message("Submitting test and saving result...");
+  $("submitBtn").textContent = "Submitting...";
+  message(
+    autoSubmit
+      ? "Time is over. Submitting your answers..."
+      : "Submitting test and saving result..."
+  );
 
   try {
     const { data, error } = await db.functions.invoke("submit-test", {
@@ -304,12 +383,17 @@ function finishTest(autoSubmit) {
 
     if (error) {
       let details = error.message || "Unknown error";
+
       if (error.context) {
         try {
-          const body = await error.context.json();
-          details = body.message || body.error || details;
+          const response = await error.context.json();
+          details =
+            response.message ||
+            response.error ||
+            details;
         } catch (_) {}
       }
+
       throw new Error(details);
     }
 
@@ -317,7 +401,11 @@ function finishTest(autoSubmit) {
       throw new Error(data?.error || "No result received.");
     }
 
+    submitted = true;
+    submitting = false;
+
     showOnly("result");
+
     $("score").textContent =
       "Test submitted successfully!\n" +
       "Score: " + data.score + " / " + data.total_questions + "\n" +
@@ -326,13 +414,19 @@ function finishTest(autoSubmit) {
       "Unanswered: " + data.unanswered;
 
     message("Your test result has been saved successfully.");
+
   } catch (e) {
+    submitting = false;
     submitted = false;
+
     $("submitBtn").disabled = false;
+    $("submitBtn").textContent = "Submit Test";
     showOnly("exam");
+
     message(
-      "Result could not be saved: " + (e.message || "Unknown error") +
-      "\nPlease try Submit Test again.",
+      "Result could not be saved: " +
+      (e.message || "Unknown error") +
+      "\nPlease check your connection and try again.",
       true
     );
   }
@@ -340,44 +434,71 @@ function finishTest(autoSubmit) {
 
 function backToTests() {
   clearInterval(timerHandle);
+
   currentTest = null;
   questions = [];
   answers = {};
+  questionIndex = 0;
   submitted = false;
+  submitting = false;
+
+  $("submitBtn").disabled = false;
+  $("submitBtn").textContent = "Submit Test";
+
   showOnly("portal");
   loadTests();
 }
 
-$("backBtn").addEventListener("click",() => {
+$("backBtn").addEventListener("click", () => {
   if (confirm("Exit this test? Your current answers will be lost.")) {
     backToTests();
   }
 });
-$("resultBackBtn").addEventListener("click",backToTests);
-$("refreshBtn").addEventListener("click",loadTests);
 
-$("loginBtn").addEventListener("click",async () => {
+$("resultBackBtn").addEventListener("click", backToTests);
+$("refreshBtn").addEventListener("click", loadTests);
+
+$("loginBtn").addEventListener("click", async () => {
   try {
     const email = $("email").value.trim();
     const password = $("password").value;
-    if (!email || !password) throw new Error("Enter email and password.");
 
-    const { data,error } = await db.auth.signInWithPassword({email,password});
+    if (!email || !password) {
+      throw new Error("Enter email and password.");
+    }
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
     if (error) throw error;
+
     await initSession(data.session);
+
   } catch (e) {
-    message(e.message || "Login failed.",true);
+    message(e.message || "Login failed.", true);
   }
 });
 
-$("signupBtn").addEventListener("click",async () => {
+$("signupBtn").addEventListener("click", async () => {
   try {
     const email = $("email").value.trim();
     const password = $("password").value;
-    if (!email || !password) throw new Error("Enter email and password.");
-    if (password.length < 6) throw new Error("Password must be at least 6 characters.");
 
-    const { data,error } = await db.auth.signUp({email,password});
+    if (!email || !password) {
+      throw new Error("Enter email and password.");
+    }
+
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters.");
+    }
+
+    const { data, error } = await db.auth.signUp({
+      email,
+      password
+    });
+
     if (error) throw error;
 
     if (data.session) {
@@ -385,19 +506,29 @@ $("signupBtn").addEventListener("click",async () => {
     } else {
       message("Account created. Confirm your email, then log in.");
     }
+
   } catch (e) {
-    message(e.message || "Account creation failed.",true);
+    message(e.message || "Account creation failed.", true);
   }
 });
 
-$("logoutBtn").addEventListener("click",async () => {
+$("logoutBtn").addEventListener("click", async () => {
   clearInterval(timerHandle);
+
   const { error } = await db.auth.signOut();
+
   if (error) {
-    message(error.message,true);
+    message(error.message, true);
     return;
   }
+
   currentUser = null;
+  currentTest = null;
+  questions = [];
+  answers = {};
+  submitted = false;
+  submitting = false;
+
   showOnly("login");
   message("Logged out.");
 });
@@ -411,11 +542,12 @@ async function initSession(session) {
 
   currentUser = session.user;
   $("studentEmail").textContent = currentUser.email || "Student";
+
   showOnly("portal");
   await loadTests();
 }
 
-db.auth.onAuthStateChange((event,session) => {
+db.auth.onAuthStateChange((event, session) => {
   if (event === "SIGNED_OUT") {
     currentUser = null;
     clearInterval(timerHandle);
@@ -424,20 +556,19 @@ db.auth.onAuthStateChange((event,session) => {
 });
 
 (async function init() {
-  if (SUPABASE_KEY === "PASTE_YOUR_CURRENT_PUBLISHABLE_KEY_HERE") {
-    message("Add your Supabase Publishable Key in student.html.",true);
-    return;
-  }
+  const { data, error } = await db.auth.getSession();
 
-  const { data,error } = await db.auth.getSession();
   if (error) {
-    message(error.message,true);
+    message(error.message, true);
     showOnly("login");
     return;
   }
 
-  if (data.session) await initSession(data.session);
-  else showOnly("login");
+  if (data.session) {
+    await initSession(data.session);
+  } else {
+    showOnly("login");
+  }
 })();
 </script>
 </body>
