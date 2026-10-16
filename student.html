@@ -2,220 +2,402 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TNPSC Group 4 - Student Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      color: #1e293b;
-    }
-    .container {
-      max-width: 420px;
-      margin: 30px auto;
-      padding: 25px;
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 5px 20px #0001;
-    }
-    h1 { text-align: center; color: #123c73; }
-    h2 { text-align: center; font-size: 20px; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-top: 7px;
-      border: 1px solid #cbd5e1;
-      border-radius: 7px;
-      font-size: 16px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 14px;
-      border: 0;
-      border-radius: 7px;
-      background: #155eaa;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .secondary { background: #0f766e; }
-    .logout { background: #64748b; }
-    #message { line-height: 1.5; overflow-wrap: anywhere; }
-    #dashboard { display: none; text-align: center; }
-    .note { font-size: 13px; color: #64748b; line-height: 1.5; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TNPSC Group 4 - Student Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
+header{background:#123c73;color:white;padding:18px;text-align:center}
+main{max-width:900px;margin:22px auto;padding:16px}
+.panel{background:white;padding:20px;margin-bottom:18px;border-radius:12px;box-shadow:0 2px 10px #0001}
+input{width:100%;padding:12px;margin:7px 0 12px;border:1px solid #cbd5e1;border-radius:7px}
+button{padding:11px 15px;margin:5px 4px 5px 0;border:0;border-radius:7px;background:#155eaa;color:white;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#0f766e}
+.muted{color:#64748b}
+.test-card{border:1px solid #dbe3ee;border-radius:9px;padding:15px;margin:12px 0}
+.option{display:block;background:#f8fafc;border:1px solid #dbe3ee;padding:12px;margin:9px 0;border-radius:7px;cursor:pointer}
+.option input{width:auto;margin:0 8px 0 0}
+#portal,#exam{display:none}
+#message{white-space:pre-wrap;overflow-wrap:anywhere}
+#timer{font-size:20px;font-weight:bold;color:#b91c1c}
+</style>
 </head>
 <body>
-  <main class="container">
-    <h1>TNPSC Group 4</h1>
+<header>
+  <h1>TNPSC Group 4</h1>
+  <p>Online Mock Test Portal / ஆன்லைன் மாதிரி தேர்வு</p>
+</header>
+
+<main>
+  <section id="login" class="panel">
     <h2>Student Login / மாணவர் உள்நுழைவு</h2>
+    <label for="email">Email Address</label>
+    <input id="email" type="email" autocomplete="email" placeholder="Enter email">
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Enter password">
+    <button id="loginBtn">Login</button>
+    <button id="signupBtn" class="secondary">Create Account</button>
+  </section>
 
-    <section id="loginForm">
-      <label for="email">Email Address / மின்னஞ்சல்</label>
-      <input id="email" type="email" placeholder="Enter your email"
-             autocomplete="email">
+  <section id="portal" class="panel">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <div>
+        <h2>Student Dashboard</h2>
+        <p id="studentEmail" class="muted"></p>
+      </div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+    <h3>Available Mock Tests</h3>
+    <p class="muted">Published tests மட்டும் இங்கு காட்டப்படும்.</p>
+    <button id="refreshBtn" class="secondary">Refresh Tests</button>
+    <div id="testsList"></div>
+  </section>
 
-      <label for="password">Password / கடவுச்சொல்</label>
-      <input id="password" type="password" placeholder="Enter password"
-             autocomplete="current-password">
+  <section id="exam" class="panel">
+    <button id="backBtn">← Back to Tests</button>
+    <h2 id="examTitle"></h2>
+    <p id="progress"></p>
+    <p id="timer">Time: --:--</p>
+    <div id="questionArea"></div>
+    <div>
+      <button id="previousBtn">Previous</button>
+      <button id="nextBtn" class="secondary">Next</button>
+      <button id="submitBtn">Submit Test</button>
+    </div>
+  </section>
 
-      <button id="signupBtn" type="button">Create Student Account</button>
-      <button id="loginBtn" class="secondary" type="button">
-        Login / உள்நுழைவு
-      </button>
+  <section id="result" class="panel" style="display:none">
+    <h2>Test Result</h2>
+    <p id="score"></p>
+    <button id="resultBackBtn">Back to Tests</button>
+  </section>
 
-      <p class="note">
-        New student? Create an account first. Use your email address and
-        password whenever you log in.
-      </p>
-    </section>
-
-    <section id="dashboard">
-      <h2>Welcome, Student!</h2>
-      <p id="studentEmail"></p>
-      <p>Login successful.</p>
-      <button id="logoutBtn" class="logout" type="button">Logout</button>
-    </section>
-
+  <section class="panel">
     <p id="message" role="status" aria-live="polite"></p>
-  </main>
+  </section>
+</main>
 
-  <script>
-    const SUPABASE_URL =
-      "https://ghxdslzwiizjreuosuia.supabase.co";
+<script>
+const SUPABASE_URL = "https://ghxdslzwiizjreuosuia.supabase.co";
 
-    const SUPABASE_KEY =
-      "sb_publishable__tKJU7MQ22Za4EJY2q4JLA_i692m4jo";
+// உங்கள் ஏற்கெனவே உள்ள Publishable Key-ஐ இங்கே வைக்கவும்.
+// Secret / service_role key பயன்படுத்த வேண்டாம்.
+const SUPABASE_KEY = "PASTE_YOUR_CURRENT_PUBLISHABLE_KEY_HERE";
 
-    const message = document.getElementById("message");
-    const loginForm = document.getElementById("loginForm");
-    const dashboard = document.getElementById("dashboard");
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function showMessage(text, isError = false) {
-      message.textContent = text;
-      message.style.color = isError ? "#b91c1c" : "#166534";
+const $ = id => document.getElementById(id);
+let currentUser = null;
+let currentTest = null;
+let questions = [];
+let answers = {};
+let questionIndex = 0;
+let timerHandle = null;
+let endTime = 0;
+let submitted = false;
+
+function message(text, error=false) {
+  $("message").textContent = text;
+  $("message").style.color = error ? "#b91c1c" : "#166534";
+}
+
+function showOnly(section) {
+  ["login","portal","exam","result"].forEach(id => {
+    $(id).style.display = id === section ? "block" : "none";
+  });
+}
+
+function safeText(tag, text) {
+  const el = document.createElement(tag);
+  el.textContent = text ?? "";
+  return el;
+}
+
+async function loadTests() {
+  $("testsList").replaceChildren(safeText("p","Loading tests..."));
+  message("");
+
+  // RLS must restrict this query to published tests.
+  const { data, error } = await db
+    .from("tests")
+    .select("id,title,title_ta,duration_minutes,status")
+    .eq("status","published")
+    .order("id",{ascending:false});
+
+  if (error) {
+    $("testsList").replaceChildren();
+    message("Could not load tests: " + error.message,true);
+    return;
+  }
+
+  $("testsList").replaceChildren();
+
+  if (!data || data.length === 0) {
+    $("testsList").append(safeText("p","No published tests available yet."));
+    return;
+  }
+
+  data.forEach(test => {
+    const card = document.createElement("div");
+    card.className = "test-card";
+    card.append(safeText("h3",test.title || "TNPSC Group 4 Mock Test"));
+
+    if (test.title_ta) card.append(safeText("p",test.title_ta));
+
+    card.append(safeText("p",
+      "Duration: " + (test.duration_minutes || 15) + " minutes"));
+
+    const btn = safeText("button","Start Test");
+    btn.addEventListener("click", () => startTest(test));
+    card.append(btn);
+    $("testsList").append(card);
+  });
+}
+
+async function startTest(test) {
+  message("Loading questions...");
+  submitted = false;
+
+  // Do not select the answer key or explanation for the student.
+  const { data, error } = await db
+    .from("questions")
+    .select(
+      "id,test_id,question_en,question_ta," +
+      "option_a_en,option_b_en,option_c_en,option_d_en," +
+      "option_a_ta,option_b_ta,option_c_ta,option_d_ta"
+    )
+    .eq("test_id",test.id)
+    .order("id",{ascending:true});
+
+  if (error) {
+    message("Could not load questions: " + error.message,true);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    message("இந்த test-ல் questions இல்லை. Admin Panel-ல் questions சேர்க்கவும்.",true);
+    return;
+  }
+
+  currentTest = test;
+  questions = data;
+  answers = {};
+  questionIndex = 0;
+
+  $("examTitle").textContent = test.title || "TNPSC Group 4 Mock Test";
+  $("result").style.display = "none";
+  showOnly("exam");
+  message("");
+
+  endTime = Date.now() +
+    Math.max(1,Number(test.duration_minutes) || 15) * 60 * 1000;
+
+  clearInterval(timerHandle);
+  updateTimer();
+  timerHandle = setInterval(updateTimer,1000);
+  renderQuestion();
+}
+
+function updateTimer() {
+  if (submitted || !currentTest) return;
+
+  const seconds = Math.max(0,Math.ceil((endTime-Date.now())/1000));
+  const minutes = Math.floor(seconds/60);
+  const remainder = seconds%60;
+
+  $("timer").textContent =
+    "Time: " + String(minutes).padStart(2,"0") + ":" +
+    String(remainder).padStart(2,"0");
+
+  if (seconds <= 0) finishTest(true);
+}
+
+function renderQuestion() {
+  const q = questions[questionIndex];
+  if (!q) return;
+
+  $("progress").textContent =
+    "Question " + (questionIndex+1) + " of " + questions.length;
+
+  const area = $("questionArea");
+  area.replaceChildren();
+
+  area.append(safeText("h3",
+    (questionIndex+1) + ". " + (q.question_en || "")));
+
+  if (q.question_ta) area.append(safeText("p",q.question_ta));
+
+  const options = [
+    ["A",q.option_a_en,q.option_a_ta],
+    ["B",q.option_b_en,q.option_b_ta],
+    ["C",q.option_c_en,q.option_c_ta],
+    ["D",q.option_d_en,q.option_d_ta]
+  ];
+
+  options.forEach(([key,en,ta]) => {
+    const label = document.createElement("label");
+    label.className = "option";
+
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "answer";
+    radio.value = key;
+    radio.checked = answers[q.id] === key;
+    radio.addEventListener("change",() => { answers[q.id] = key; });
+
+    label.append(radio,document.createTextNode(
+      key + ". " + (en || "")
+    ));
+
+    if (ta) {
+      label.append(document.createElement("br"));
+      label.append(document.createTextNode(ta));
     }
 
-    function showDashboard(user) {
-      loginForm.style.display = "none";
-      dashboard.style.display = "block";
-      document.getElementById("studentEmail").textContent =
-        user.email || "Student";
-      showMessage("Login successful!");
+    area.append(label);
+  });
+
+  $("previousBtn").disabled = questionIndex === 0;
+  $("nextBtn").disabled = questionIndex === questions.length-1;
+}
+
+$("nextBtn").addEventListener("click",() => {
+  if (questionIndex < questions.length-1) {
+    questionIndex++;
+    renderQuestion();
+  }
+});
+
+$("previousBtn").addEventListener("click",() => {
+  if (questionIndex > 0) {
+    questionIndex--;
+    renderQuestion();
+  }
+});
+
+$("submitBtn").addEventListener("click",() => {
+  if (confirm("Submit this test now?")) finishTest(false);
+});
+
+function finishTest(autoSubmit) {
+  if (submitted) return;
+  submitted = true;
+  clearInterval(timerHandle);
+
+  // IMPORTANT: score is not calculated in this student browser.
+  // Do not fetch answer keys into public client-side JavaScript.
+  showOnly("result");
+  $("score").textContent = autoSubmit
+    ? "Time is over. Your answers have been submitted locally."
+    : "Your answers have been recorded in this page. Secure scoring and result saving require a server-side submission function.";
+  message("Answered " + Object.keys(answers).length +
+    " of " + questions.length + " questions.");
+}
+
+function backToTests() {
+  clearInterval(timerHandle);
+  currentTest = null;
+  questions = [];
+  answers = {};
+  submitted = false;
+  showOnly("portal");
+  loadTests();
+}
+
+$("backBtn").addEventListener("click",() => {
+  if (confirm("Exit this test? Your current answers will be lost.")) {
+    backToTests();
+  }
+});
+$("resultBackBtn").addEventListener("click",backToTests);
+$("refreshBtn").addEventListener("click",loadTests);
+
+$("loginBtn").addEventListener("click",async () => {
+  try {
+    const email = $("email").value.trim();
+    const password = $("password").value;
+    if (!email || !password) throw new Error("Enter email and password.");
+
+    const { data,error } = await db.auth.signInWithPassword({email,password});
+    if (error) throw error;
+    await initSession(data.session);
+  } catch (e) {
+    message(e.message || "Login failed.",true);
+  }
+});
+
+$("signupBtn").addEventListener("click",async () => {
+  try {
+    const email = $("email").value.trim();
+    const password = $("password").value;
+    if (!email || !password) throw new Error("Enter email and password.");
+    if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+
+    const { data,error } = await db.auth.signUp({email,password});
+    if (error) throw error;
+
+    if (data.session) {
+      await initSession(data.session);
+    } else {
+      message("Account created. Confirm your email, then log in.");
     }
+  } catch (e) {
+    message(e.message || "Account creation failed.",true);
+  }
+});
 
-    function showLogin() {
-      loginForm.style.display = "block";
-      dashboard.style.display = "none";
-    }
+$("logoutBtn").addEventListener("click",async () => {
+  clearInterval(timerHandle);
+  const { error } = await db.auth.signOut();
+  if (error) {
+    message(error.message,true);
+    return;
+  }
+  currentUser = null;
+  showOnly("login");
+  message("Logged out.");
+});
 
-    let client;
+async function initSession(session) {
+  if (!session || !session.user) {
+    currentUser = null;
+    showOnly("login");
+    return;
+  }
 
-    function getClient() {
-      if (!window.supabase) {
-        throw new Error(
-          "Supabase library failed to load. Check your internet connection."
-        );
-      }
+  currentUser = session.user;
+  $("studentEmail").textContent = currentUser.email || "Student";
+  showOnly("portal");
+  await loadTests();
+}
 
-      if (!client) {
-        client = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_KEY
-        );
-      }
-      return client;
-    }
+db.auth.onAuthStateChange((event,session) => {
+  if (event === "SIGNED_OUT") {
+    currentUser = null;
+    clearInterval(timerHandle);
+    showOnly("login");
+  }
+});
 
-    function getCredentials() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+(async function init() {
+  if (SUPABASE_KEY === "PASTE_YOUR_CURRENT_PUBLISHABLE_KEY_HERE") {
+    message("Add your Supabase Publishable Key in student.html.",true);
+    return;
+  }
 
-      if (!email || !password) {
-        throw new Error("Please enter your email and password.");
-      }
-      if (password.length < 6) {
-        throw new Error("Password must be at least 6 characters.");
-      }
-      return { email, password };
-    }
+  const { data,error } = await db.auth.getSession();
+  if (error) {
+    message(error.message,true);
+    showOnly("login");
+    return;
+  }
 
-    document.getElementById("signupBtn").onclick = async () => {
-      try {
-        showMessage("Creating account...");
-        const db = getClient();
-        const { email, password } = getCredentials();
-
-        const { data, error } = await db.auth.signUp({
-          email,
-          password
-        });
-
-        if (error) throw error;
-
-        if (data.session && data.user) {
-          showDashboard(data.user);
-        } else {
-          showMessage(
-            "Account created. Check your email and confirm your account before logging in."
-          );
-        }
-      } catch (error) {
-        showMessage(error.message || "Account creation failed.", true);
-      }
-    };
-
-    document.getElementById("loginBtn").onclick = async () => {
-      try {
-        showMessage("Logging in...");
-        const db = getClient();
-        const { email, password } = getCredentials();
-
-        const { data, error } = await db.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (error) throw error;
-        showDashboard(data.user);
-      } catch (error) {
-        showMessage(error.message || "Login failed.", true);
-      }
-    };
-
-    document.getElementById("logoutBtn").onclick = async () => {
-      try {
-        const { error } = await getClient().auth.signOut();
-        if (error) throw error;
-
-        showLogin();
-        showMessage("You have logged out.");
-      } catch (error) {
-        showMessage(error.message || "Logout failed.", true);
-      }
-    };
-
-    async function restoreSession() {
-      try {
-        const { data, error } = await getClient().auth.getSession();
-        if (error) throw error;
-
-        if (data.session && data.session.user) {
-          showDashboard(data.session.user);
-        }
-      } catch (error) {
-        showMessage(error.message || "Unable to initialize login.", true);
-      }
-    }
-
-    restoreSession();
-  </script>
+  if (data.session) await initSession(data.session);
+  else showOnly("login");
+})();
+</script>
 </body>
 </html>
