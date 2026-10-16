@@ -3,90 +3,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TNPSC Group 4 - Student Login</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 20px;
       font-family: Arial, sans-serif;
       background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
       color: #172033;
     }
     .card {
-      max-width: 430px;
-      margin: 50px auto;
-      padding: 26px;
+      max-width: 420px;
+      margin: 45px auto;
       background: white;
-      border-radius: 14px;
-      box-shadow: 0 5px 24px #00000012;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px #0001;
     }
-    h1 { font-size: 24px; text-align: center; }
-    p { line-height: 1.5; color: #475569; }
-    label { display: block; margin: 18px 0 7px; font-weight: bold; }
+    h1 { text-align: center; font-size: 25px; }
+    label { display: block; margin-top: 16px; }
     input {
       width: 100%;
+      box-sizing: border-box;
       padding: 12px;
+      margin-top: 7px;
       border: 1px solid #cbd5e1;
-      border-radius: 7px;
+      border-radius: 6px;
       font-size: 16px;
     }
     button {
       width: 100%;
-      padding: 13px;
-      margin-top: 14px;
-      border: 0;
-      border-radius: 7px;
+      padding: 12px;
+      margin-top: 15px;
       background: #155eef;
       color: white;
-      font-size: 16px;
+      border: 0;
+      border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
-    button:disabled { opacity: .6; cursor: wait; }
     .secondary { background: #475569; }
-    #message { overflow-wrap: anywhere; }
+    #message { overflow-wrap: anywhere; line-height: 1.5; }
     .hidden { display: none; }
   </style>
 </head>
 <body>
   <main class="card">
     <h1>TNPSC Group 4</h1>
-    <p style="text-align:center">Student Login / மாணவர் உள்நுழைவு</p>
+    <p style="text-align:center">Student Registration & Login</p>
 
-    <section id="loginSection">
-      <label for="phone">Mobile Number / மொபைல் எண்</label>
-      <input
-        id="phone"
-        type="tel"
-        autocomplete="tel"
-        placeholder="+91 9876543210"
-        maxlength="16"
-      >
-      <p>Enter your number with country code. India: +91.</p>
-      <button id="sendButton" type="button">Send OTP</button>
+    <section id="authSection">
+      <label for="email">Email ID</label>
+      <input id="email" type="email"
+        placeholder="Enter your email" autocomplete="email">
 
-      <div id="otpSection" class="hidden">
-        <label for="otp">Enter OTP / OTP உள்ளிடவும்</label>
-        <input
-          id="otp"
-          type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="6-digit OTP"
-          maxlength="6"
-        >
-        <button id="verifyButton" type="button">Verify OTP & Login</button>
-        <button id="resendButton" class="secondary" type="button">
-          Resend OTP
-        </button>
-      </div>
+      <label for="password">Password</label>
+      <input id="password" type="password"
+        placeholder="Minimum 6 characters"
+        autocomplete="current-password">
+
+      <button id="signupButton" type="button">
+        Create Student Account
+      </button>
+
+      <button id="loginButton" type="button">
+        Login
+      </button>
     </section>
 
     <section id="dashboard" class="hidden">
-      <h2>Login Successful!</h2>
-      <p id="studentInfo"></p>
-      <p>Your student account is signed in.</p>
+      <h2>Welcome, Student!</h2>
+      <p id="studentEmail"></p>
+      <p>உங்கள் Login வெற்றிகரமாக முடிந்தது.</p>
       <button id="logoutButton" class="secondary" type="button">
         Logout
       </button>
@@ -97,149 +86,117 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Replace these with your existing Supabase project details.
-    const SUPABASE_URL = "https://ghxdslzwiizjreuosuia.supabase.co";
-    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable__tKJU7MQ22Za4EJY2q4JLA_i692m4jo";
+    const SUPABASE_URL =
+      "https://ghxdslzwiizjreuosuia.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable__tKJU7MQ22Za4EJY2q4JLA_i692m4jo";
 
     const supabase = window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_PUBLISHABLE_KEY
     );
 
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
 
-    let currentPhone = "";
-
-    function showMessage(message, isError = false) {
-      $("message").textContent = message;
-      $("message").style.color = isError ? "#b42318" : "#067647";
+    function message(text, error = false) {
+      $("message").textContent = text;
+      $("message").style.color = error ? "#b42318" : "#067647";
     }
 
-    function setBusy(button, busy, label) {
-      button.disabled = busy;
-      if (busy) {
-        button.dataset.originalText = button.textContent;
-        button.textContent = label;
-      } else {
-        button.textContent =
-          button.dataset.originalText || button.textContent;
-      }
-    }
+    function getCredentials() {
+      const email = $("email").value.trim();
+      const password = $("password").value;
 
-    function normalizePhone(value) {
-      // Remove spaces, brackets and hyphens; retain the leading +.
-      return value.trim().replace(/[\s()-]/g, "");
-    }
-
-    async function sendOTP() {
-      const button = $("sendButton");
-      const phone = normalizePhone($("phone").value);
-
-      // E.164 format: + followed by 8–15 digits.
-      if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-        showMessage(
-          "Enter a valid phone number with country code, e.g. +919876543210.",
-          true
-        );
-        return;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error("சரியான Email ID உள்ளிடவும்.");
       }
 
-      setBusy(button, true, "Sending...");
-      showMessage("");
+      if (password.length < 6) {
+        throw new Error("Password குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்.");
+      }
 
+      return { email, password };
+    }
+
+    async function signup() {
       try {
-        const { error } = await supabase.auth.signInWithOtp({
-          phone: phone
+        const { email, password } = getCredentials();
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password
         });
 
         if (error) throw error;
 
-        currentPhone = phone;
-        $("otpSection").classList.remove("hidden");
-        showMessage("OTP request sent. Check your SMS messages.");
-        $("otp").focus();
+        if (data.session) {
+          showDashboard(data.user);
+          message("Student account உருவாக்கப்பட்டது!");
+        } else {
+          message(
+            "Registration வெற்றி! உங்கள் Email-க்கு வந்த confirmation link-ஐ திறந்து, பின்னர் Login செய்யவும்."
+          );
+        }
       } catch (error) {
-        showMessage(error.message || "Unable to send OTP.", true);
-      } finally {
-        setBusy(button, false);
+        message(error.message, true);
       }
     }
 
-    async function verifyOTP() {
-      const button = $("verifyButton");
-      const token = $("otp").value.trim();
-
-      if (!currentPhone) {
-        showMessage("Please request an OTP first.", true);
-        return;
-      }
-
-      if (!/^\d{4,8}$/.test(token)) {
-        showMessage("Enter the OTP received by SMS.", true);
-        return;
-      }
-
-      setBusy(button, true, "Verifying...");
-      showMessage("");
-
+    async function login() {
       try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          phone: currentPhone,
-          token: token,
-          type: "sms"
-        });
+        const { email, password } = getCredentials();
+
+        const { data, error } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
 
         if (error) throw error;
 
-        $("loginSection").classList.add("hidden");
-        $("dashboard").classList.remove("hidden");
-        $("studentInfo").textContent =
-          "Logged in mobile: " + (data.user?.phone || currentPhone);
-
-        showMessage("Mobile number verified successfully.");
+        showDashboard(data.user);
+        message("Login வெற்றிகரமாக முடிந்தது!");
       } catch (error) {
-        showMessage(error.message || "OTP verification failed.", true);
-      } finally {
-        setBusy(button, false);
+        message(error.message, true);
       }
+    }
+
+    function showDashboard(user) {
+      $("authSection").classList.add("hidden");
+      $("dashboard").classList.remove("hidden");
+      $("studentEmail").textContent =
+        "Email: " + (user.email || "");
     }
 
     async function logout() {
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        showMessage(error.message, true);
+        message(error.message, true);
         return;
       }
 
       $("dashboard").classList.add("hidden");
-      $("loginSection").classList.remove("hidden");
-      $("otpSection").classList.add("hidden");
-      $("otp").value = "";
-      currentPhone = "";
-      showMessage("You have logged out.");
+      $("authSection").classList.remove("hidden");
+      $("password").value = "";
+      message("நீங்கள் Logout செய்துவிட்டீர்கள்.");
     }
 
-    $("sendButton").addEventListener("click", sendOTP);
-    $("verifyButton").addEventListener("click", verifyOTP);
-    $("resendButton").addEventListener("click", sendOTP);
+    $("signupButton").addEventListener("click", signup);
+    $("loginButton").addEventListener("click", login);
     $("logoutButton").addEventListener("click", logout);
 
-    // Restore an existing login when the page is reopened.
     async function restoreSession() {
       const { data, error } = await supabase.auth.getSession();
 
       if (error) {
-        showMessage(error.message, true);
+        message(error.message, true);
         return;
       }
 
       if (data.session) {
-        $("loginSection").classList.add("hidden");
-        $("dashboard").classList.remove("hidden");
-        $("studentInfo").textContent =
-          "Logged in mobile: " +
-          (data.session.user.phone || "Verified account");
+        showDashboard(data.session.user);
       }
     }
 
