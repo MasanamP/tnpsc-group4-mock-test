@@ -3,204 +3,208 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TNPSC Group 4 - Student Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    * { box-sizing: border-box; }
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
       background: #f1f5f9;
-      margin: 0;
-      padding: 20px;
-      color: #172033;
+      color: #1e293b;
     }
-    .card {
+    .container {
       max-width: 420px;
-      margin: 45px auto;
-      background: white;
+      margin: 50px auto;
       padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px #0001;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 5px 20px #0001;
     }
-    h1 { text-align: center; font-size: 25px; }
-    label { display: block; margin-top: 16px; }
+    h1 { text-align: center; color: #123c73; font-size: 25px; }
+    h2 { text-align: center; font-size: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
     input {
       width: 100%;
-      box-sizing: border-box;
       padding: 12px;
       margin-top: 7px;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
+      border-radius: 7px;
       font-size: 16px;
     }
     button {
       width: 100%;
       padding: 12px;
-      margin-top: 15px;
-      background: #155eef;
-      color: white;
+      margin-top: 14px;
       border: 0;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 7px;
+      background: #155eaa;
+      color: white;
       font-size: 16px;
+      cursor: pointer;
     }
-    .secondary { background: #475569; }
-    #message { overflow-wrap: anywhere; line-height: 1.5; }
-    .hidden { display: none; }
+    button.secondary { background: #0f766e; }
+    button.logout { background: #64748b; }
+    #message { margin-top: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+    .note { font-size: 13px; color: #64748b; line-height: 1.5; }
+    #dashboard { display: none; text-align: center; }
   </style>
 </head>
 <body>
-  <main class="card">
+  <main class="container">
     <h1>TNPSC Group 4</h1>
-    <p style="text-align:center">Student Registration & Login</p>
+    <h2>Student Login / மாணவர் உள்நுழைவு</h2>
 
-    <section id="authSection">
-      <label for="email">Email ID</label>
-      <input id="email" type="email"
-        placeholder="Enter your email" autocomplete="email">
+    <section id="loginForm">
+      <label for="email">Email Address / மின்னஞ்சல்</label>
+      <input id="email" type="email" placeholder="Enter your email" autocomplete="email">
 
-      <label for="password">Password</label>
-      <input id="password" type="password"
-        placeholder="Minimum 6 characters"
-        autocomplete="current-password">
+      <label for="password">Password / கடவுச்சொல்</label>
+      <input id="password" type="password" placeholder="Minimum 6 characters"
+             autocomplete="current-password">
 
-      <button id="signupButton" type="button">
-        Create Student Account
-      </button>
+      <button id="signupBtn" type="button">Create Student Account</button>
+      <button id="loginBtn" class="secondary" type="button">Login / உள்நுழைவு</button>
 
-      <button id="loginButton" type="button">
-        Login
-      </button>
+      <p class="note">
+        New student? Create an account first. Use your email address and password
+        whenever you log in.
+      </p>
     </section>
 
-    <section id="dashboard" class="hidden">
+    <section id="dashboard">
       <h2>Welcome, Student!</h2>
       <p id="studentEmail"></p>
-      <p>உங்கள் Login வெற்றிகரமாக முடிந்தது.</p>
-      <button id="logoutButton" class="secondary" type="button">
-        Logout
-      </button>
+      <p>You are logged in successfully.</p>
+      <button id="logoutBtn" class="logout" type="button">Logout</button>
     </section>
 
     <p id="message" role="status" aria-live="polite"></p>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL =
-      "https://ghxdslzwiizjreuosuia.supabase.co";
+    const SUPABASE_URL = "https://ghxdslzwiizjreuosuia.supabase.co";
+    const SUPABASE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
 
-    const SUPABASE_PUBLISHABLE_KEY =
-      "sb_publishable__tKJU7MQ22Za4EJY2q4JLA_i692m4jo";
+    const message = document.getElementById("message");
+    const loginForm = document.getElementById("loginForm");
+    const dashboard = document.getElementById("dashboard");
 
-    const supabase = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+    let supabaseClient = null;
 
-    const $ = id => document.getElementById(id);
+    function showMessage(text, isError = false) {
+      message.textContent = text;
+      message.style.color = isError ? "#b91c1c" : "#166534";
+    }
 
-    function message(text, error = false) {
-      $("message").textContent = text;
-      $("message").style.color = error ? "#b42318" : "#067647";
+    function setLoggedIn(user) {
+      loginForm.style.display = "none";
+      dashboard.style.display = "block";
+      document.getElementById("studentEmail").textContent =
+        user.email || "Student";
+      showMessage("Login successful!");
+    }
+
+    function setLoggedOut() {
+      loginForm.style.display = "block";
+      dashboard.style.display = "none";
+    }
+
+    function getClient() {
+      if (!window.supabase) {
+        throw new Error("Supabase library could not load. Check your internet connection.");
+      }
+
+      if (!SUPABASE_KEY ||
+          SUPABASE_KEY === "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE") {
+        throw new Error("Please add your Supabase publishable key in student.html.");
+      }
+
+      if (!supabaseClient) {
+        supabaseClient = window.supabase.createClient(
+          SUPABASE_URL, SUPABASE_KEY
+        );
+      }
+      return supabaseClient;
     }
 
     function getCredentials() {
-      const email = $("email").value.trim();
-      const password = $("password").value;
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        throw new Error("சரியான Email ID உள்ளிடவும்.");
+      if (!email || !password) {
+        throw new Error("Please enter both email and password.");
       }
-
       if (password.length < 6) {
-        throw new Error("Password குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்.");
+        throw new Error("Password must contain at least 6 characters.");
       }
-
       return { email, password };
     }
 
-    async function signup() {
+    document.getElementById("signupBtn").addEventListener("click", async () => {
       try {
+        showMessage("Creating your account...");
+        const client = getClient();
         const { email, password } = getCredentials();
 
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password
-        });
-
+        const { data, error } = await client.auth.signUp({ email, password });
         if (error) throw error;
 
-        if (data.session) {
-          showDashboard(data.user);
-          message("Student account உருவாக்கப்பட்டது!");
+        if (data.session && data.user) {
+          setLoggedIn(data.user);
         } else {
-          message(
-            "Registration வெற்றி! உங்கள் Email-க்கு வந்த confirmation link-ஐ திறந்து, பின்னர் Login செய்யவும்."
+          showMessage(
+            "Account created. Please check your email and confirm your account before logging in."
           );
         }
       } catch (error) {
-        message(error.message, true);
+        showMessage(error.message || "Could not create account.", true);
       }
-    }
+    });
 
-    async function login() {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       try {
+        showMessage("Logging in...");
+        const client = getClient();
         const { email, password } = getCredentials();
 
-        const { data, error } =
-          await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-
+        const { data, error } = await client.auth.signInWithPassword({
+          email, password
+        });
         if (error) throw error;
 
-        showDashboard(data.user);
-        message("Login வெற்றிகரமாக முடிந்தது!");
+        setLoggedIn(data.user);
       } catch (error) {
-        message(error.message, true);
+        showMessage(error.message || "Login failed.", true);
       }
-    }
+    });
 
-    function showDashboard(user) {
-      $("authSection").classList.add("hidden");
-      $("dashboard").classList.remove("hidden");
-      $("studentEmail").textContent =
-        "Email: " + (user.email || "");
-    }
-
-    async function logout() {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        message(error.message, true);
-        return;
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        const client = getClient();
+        const { error } = await client.auth.signOut();
+        if (error) throw error;
+        setLoggedOut();
+        showMessage("You have logged out.");
+      } catch (error) {
+        showMessage(error.message || "Logout failed.", true);
       }
+    });
 
-      $("dashboard").classList.add("hidden");
-      $("authSection").classList.remove("hidden");
-      $("password").value = "";
-      message("நீங்கள் Logout செய்துவிட்டீர்கள்.");
-    }
+    (async function restoreSession() {
+      try {
+        const client = getClient();
+        const { data, error } = await client.auth.getSession();
+        if (error) throw error;
 
-    $("signupButton").addEventListener("click", signup);
-    $("loginButton").addEventListener("click", login);
-    $("logoutButton").addEventListener("click", logout);
-
-    async function restoreSession() {
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        message(error.message, true);
-        return;
+        if (data.session && data.session.user) {
+          setLoggedIn(data.session.user);
+        }
+      } catch (error) {
+        showMessage(error.message || "Unable to initialize login.", true);
       }
-
-      if (data.session) {
-        showDashboard(data.session.user);
-      }
-    }
-
-    restoreSession();
+    })();
   </script>
 </body>
 </html>
